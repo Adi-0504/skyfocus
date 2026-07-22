@@ -46,7 +46,7 @@ const SkeletonCard = () => (
 export const TodayView: React.FC<TodayViewProps> = ({ onOpenTaskModal }) => {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const { tasks, toggleTaskCompletion, loading } = useTasks();
+  const { tasks, toggleTaskCompletion, loading, error, fetchTasks } = useTasks();
 
   const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const formattedDisplayDate = useMemo(
@@ -193,6 +193,15 @@ export const TodayView: React.FC<TodayViewProps> = ({ onOpenTaskModal }) => {
           <Plus className="w-5 h-5 stroke-[2.5]" />
         </button>
       </div>
+
+      {error && (
+        <div className="sky-card p-4 mb-4 flex items-center justify-between gap-3 text-sm">
+          <span className="text-[#475A61]">{t('common.error_title')}</span>
+          <button type="button" onClick={fetchTasks} className="sky-button-secondary px-3 py-1.5 text-xs">
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
 
       {/* Loading State */}
       {loading ? (

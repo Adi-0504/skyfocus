@@ -263,12 +263,18 @@ Use real notification functionality.
 No simulated notifications.
 
 
-Support:
+Support currently:
 
-- Notification permission
-- Push notifications
-- Reminder notifications
+- Browser notification permission
+- Reminder data persistence
+
+Not yet implemented:
+
+- Background Web Push delivery
+- Push subscription registration
 - Notification click routing
+
+These require VAPID configuration and a trusted server-side delivery mechanism.
 
 
 ---
@@ -419,7 +425,7 @@ Support:
 - Cached resources
 
 
-Handle offline states gracefully.
+Handle offline states gracefully without creating fake users, tasks, or other production records.
 
 
 ---

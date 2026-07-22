@@ -6,6 +6,8 @@ This document outlines the complete automated Supabase backend architecture, mig
 
 ## 1. Automated Schema & Migrations
 
+Migrations must be applied to a new or linked Supabase project before the application can use the backend. The migration files are non-destructive; never add `DROP TABLE ... CASCADE` to a production migration.
+
 All database schemas, constraints, foreign keys, triggers, indexes, and Row Level Security (RLS) policies are version-controlled under:
 
 `supabase/migrations/20260722000000_initial_schema.sql`
@@ -89,10 +91,10 @@ VITE_SUPABASE_ANON_KEY=<YOUR_ANON_KEY>
 In your Supabase Dashboard under **Authentication > Providers**:
 
 - [x] **Email & Password**: Enable Email provider. Disable email confirmation requirement for instant onboarding if desired.
-- [x] **Google OAuth**:
+- [ ] **Google OAuth**:
   1. Enable Google Provider in Supabase Auth Settings.
   2. Enter **Client ID** & **Client Secret** from Google Cloud Console.
   3. Add `https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback` to Google Authorized Redirect URIs.
-- [x] **URL Configuration**:
+- [ ] **URL Configuration**:
   - Site URL: `http://localhost:5173` (or your production URL).
   - Additional Redirect URIs: `http://localhost:5173/**`

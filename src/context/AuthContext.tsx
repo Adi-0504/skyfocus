@@ -26,6 +26,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Initial Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -58,6 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    if (!supabase) return;
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -75,17 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           i18n.changeLanguage(data.language);
         }
       } else {
-        // Fallback default profile if trigger hasn't populated yet
-        const defaultProfile: Profile = {
-          id: userId,
-          display_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
-          avatar_url: user?.user_metadata?.avatar_url || null,
-          language: 'zh-TW',
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setProfile(defaultProfile);
+        setProfile(null);
       }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
@@ -95,6 +92,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async () => {
+    if (!supabase) throw new Error('Supabase 尚未設定，無法登入。');
+
     try {
       const redirectUrl = window.location.origin + window.location.pathname;
       const { error } = await supabase.auth.signInWithOAuth({
@@ -104,27 +103,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) throw error;
-    } catch (err: any) {
-      console.warn('Supabase OAuth unavailable, switching to local demo session:', err);
-      // Fallback local session for demo/offline preview
-      const mockUser: any = {
-        id: 'local-user-google',
-        email: 'user@google.com',
-        user_metadata: { full_name: 'Google User' },
-      };
-      setUser(mockUser);
-      setProfile({
-        id: 'local-user-google',
-        display_name: 'Google User',
-        language: 'zh-TW',
-        timezone: 'UTC',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+    } catch (err) {
+      throw err;
     }
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
+    if (!supabase) return { error: new Error('Supabase 尚未設定，無法登入。') };
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -137,29 +123,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { error: null };
     } catch (err: any) {
-      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        console.warn('Supabase backend unreachable, using local session:', err);
-        const mockUser: any = {
-          id: 'local-user-' + btoa(email).slice(0, 8),
-          email,
-          user_metadata: { full_name: email.split('@')[0] },
-        };
-        setUser(mockUser);
-        setProfile({
-          id: mockUser.id,
-          display_name: email.split('@')[0],
-          language: 'zh-TW',
-          timezone: 'UTC',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-        return { error: null };
-      }
       return { error: err };
     }
   };
 
   const signUpWithEmail = async (email: string, pass: string, displayName: string) => {
+    if (!supabase) return { error: new Error('Supabase 尚未設定，無法註冊。') };
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -179,50 +149,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { error: null };
     } catch (err: any) {
-      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-        console.warn('Supabase backend unreachable, registering local session:', err);
-        const mockUser: any = {
-          id: 'local-user-' + btoa(email).slice(0, 8),
-          email,
-          user_metadata: { full_name: displayName || email.split('@')[0] },
-        };
-        setUser(mockUser);
-        setProfile({
-          id: mockUser.id,
-          display_name: displayName || email.split('@')[0],
-          language: 'zh-TW',
-          timezone: 'UTC',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-        return { error: null };
-      }
       return { error: err };
     }
   };
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-    } catch (e) {}
+      if (supabase) await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Failed to sign out:', e);
+    }
     setSession(null);
     setUser(null);
     setProfile(null);
   };
 
   const resetPassword = async (email: string) => {
+    if (!supabase) return { error: new Error('Supabase 尚未設定，無法重設密碼。') };
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       return { error };
     } catch (err: any) {
-      return { error: null };
+      return { error: err };
     }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return { error: 'Not authenticated' };
+    if (!supabase) return { error: 'Supabase 尚未設定。' };
 
     try {
       const { data, error } = await supabase

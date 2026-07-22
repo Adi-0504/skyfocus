@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-6d4f622d'], (function (workbox) { 'use strict';
+define(['./workbox-5daee600'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -81,20 +81,12 @@ define(['./workbox-6d4f622d'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.vg0ibfpb0f8"
+    "revision": "0.uq0g9086348"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
-  workbox.registerRoute(/^https:\/\/wrzpjgjltlyrzdumcbrq\.supabase\.co\//, new workbox.NetworkFirst({
-    "cacheName": "supabase-api",
-    "networkTimeoutSeconds": 10,
-    plugins: [new workbox.ExpirationPlugin({
-      maxEntries: 50,
-      maxAgeSeconds: 300
-    })]
-  }), 'GET');
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\//, new workbox.StaleWhileRevalidate({
     "cacheName": "google-fonts-stylesheets",
     plugins: []

@@ -66,7 +66,7 @@ export const FocusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [user]);
 
   const fetchFocusSessions = async () => {
-    if (!user) return;
+    if (!user || !supabase) return;
     try {
       const { data, error } = await supabase
         .from('focus_sessions')
@@ -108,7 +108,7 @@ export const FocusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const startedAt = startTimeRef.current || new Date(Date.now() - (workDuration - timeLeft) * 1000).toISOString();
     const actualDuration = mode === 'work' ? workDuration - timeLeft : breakDuration - timeLeft;
 
-    if (user && actualDuration > 10 && mode === 'work') {
+    if (user && supabase && actualDuration > 10 && mode === 'work') {
       try {
         const { data, error } = await supabase
           .from('focus_sessions')

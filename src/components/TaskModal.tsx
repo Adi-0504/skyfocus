@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
 import { X, Plus, Trash2, Calendar, Clock, Tag as TagIcon, List, Bell, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTasks } from '../context/TaskContext';
-import { Task, Priority } from '../types/database';
+import { Task, Priority, RepeatType } from '../types/database';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -29,9 +30,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
   
   // Reminder draft
   const [reminderTime, setReminderTime] = useState('');
+  const [repeatType, setRepeatType] = useState<RepeatType>('none');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !sheetRef.current) return;
+    gsap.fromTo(sheetRef.current, { y: 32, autoAlpha: 0 }, {
+      y: 0,
+      autoAlpha: 1,
+      duration: 0.35,
+      ease: 'power3.out',
+      overwrite: true,
+    });
+  }, [isOpen]);
 
   useEffect(() => {
     if (taskToEdit) {
@@ -44,6 +58,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
       setSubtasksInput([]);
       setTagsInput(taskToEdit.tags?.map((t) => t.name) || []);
       setReminderTime(taskToEdit.reminders?.[0]?.reminder_time ? taskToEdit.reminders[0].reminder_time.slice(0, 16) : '');
+      setRepeatType(taskToEdit.reminders?.[0]?.repeat_type || 'none');
     } else {
       setTitle('');
       setDescription('');
@@ -54,6 +69,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
       setSubtasksInput([]);
       setTagsInput([]);
       setReminderTime('');
+      setRepeatType('none');
     }
     setErrorMsg('');
   }, [taskToEdit, isOpen]);
@@ -101,8 +117,24 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
 
     try {
       if (taskToEdit) {
-        await updateTask(
-          taskToEdit.id,
+          const updated = await updateTask(
+            taskToEdit.id,
+          {
+            title: title.trim(),
+            description: description.trim() || null,
+            priority,
+            due_date: dueDate || null,
+            due_time: dueTime || null,
+            list_id: listId || null,
+            },
+            undefined,
+            tagsInput,
+            reminderTime ? new Date(reminderTime).toISOString() : '',
+            repeatType
+          );
+          if (!updated) throw new Error('Failed to update task.');
+        } else {
+          const created = await createTask(
           {
             title: title.trim(),
             description: description.trim() || null,
@@ -111,24 +143,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
             due_time: dueTime || null,
             list_id: listId || null,
           },
-          undefined,
-          tagsInput,
-          reminderTime ? new Date(reminderTime).toISOString() : undefined
-        );
-      } else {
-        await createTask(
-          {
-            title: title.trim(),
-            description: description.trim() || null,
-            priority,
-            due_date: dueDate || null,
-            due_time: dueTime || null,
-            list_id: listId || null,
-          },
-          subtasksInput,
-          tagsInput,
-          reminderTime ? new Date(reminderTime).toISOString() : undefined
-        );
+            subtasksInput,
+            tagsInput,
+            reminderTime ? new Date(reminderTime).toISOString() : undefined,
+            repeatType
+          );
+          if (!created) throw new Error('Failed to create task.');
       }
       onClose();
     } catch (err: any) {
@@ -148,6 +168,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-xs p-0 sm:p-4 transition-all">
       <div
+        ref={sheetRef}
         className="w-full max-w-lg sky-sheet sm:rounded-2xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300"
       >
         {/* Header */}
@@ -290,6 +311,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, taskToEdi
               onChange={(e) => setReminderTime(e.target.value)}
               className="w-full sky-input px-3 py-2 text-sm"
             />
+            <select
+              value={repeatType}
+              onChange={(e) => setRepeatType(e.target.value as RepeatType)}
+              className="w-full sky-input px-3 py-2 text-sm mt-2"
+            >
+              <option value="none">{t('task_modal.repeat_none')}</option>
+              <option value="daily">{t('task_modal.repeat_daily')}</option>
+              <option value="weekly">{t('task_modal.repeat_weekly')}</option>
+              <option value="monthly">{t('task_modal.repeat_monthly')}</option>
+            </select>
           </div>
 
           {/* Tags */}

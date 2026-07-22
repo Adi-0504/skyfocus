@@ -1,6 +1,6 @@
 # Skyfocus — Minimum Marketable Product (MMP) Product Requirement Document (PRD)
 
-> **Document Status**: Complete & Verified  
+> **Document Status**: Release Candidate
 > **Version**: 1.0.0 (MMP)  
 > **Source of Truth**: Active Source Code (`./src/`), Database DDL (`./supabase/migrations/`), and Specification Specs (`./docs/`)  
 > **Last Updated**: 2026-07-22
@@ -35,7 +35,7 @@
 | **Context Switching Between Apps**: Users lose focus switching between a todo list app and a separate Pomodoro timer app. | **Integrated Focus Session**: Select any task directly from the Pomodoro focus view to track time against it. |
 | **Overwhelming & Cluttered UIs**: Traditional task apps overcrowd the screen with complex project boards and nested menus. | **Minimalist 5-Tab Navigation**: Clean division into Today, Tasks, Focus, History, and Settings. |
 | **Poor Mobile Web Experience**: Non-native web apps lag, lack safe-area padding, and fail as installed PWAs. | **iOS Safe-Area Aware PWA**: Viewport-fit cover, auto-updating Service Worker, maskable icons, and smooth touch response. |
-| **Network Instability**: Cloud-only apps block users when internet connectivity drops. | **Resilient Local Fallback**: Seamless context state fallbacks for offline demo preview and background network sync. |
+| **Network Instability**: Cloud-only apps block users when internet connectivity drops. | **Graceful Offline Handling**: The app shell remains cacheable and data errors are surfaced without creating fake records. |
 
 ---
 
@@ -53,7 +53,7 @@
 ### 5.1 Authentication & User Management (`LoginView.tsx`, `AuthContext.tsx`)
 - **Email/Password Auth**: Registration with display name, sign-in, and password reset trigger.
 - **Google OAuth Integration**: One-click Google sign-in with automatic redirect back to application origin.
-- **Offline / Network-Resilient Fallback**: Demo user fallback when Supabase connection is unreachable.
+- **Supabase Error Handling**: Connection failures are surfaced to the user; no fake users or local production records are created.
 - **User Profile Management**: Display name editing, profile avatar initial generation, and language preferences.
 
 ### 5.2 Daily Overview (`TodayView.tsx`)
@@ -83,7 +83,7 @@
 
 ### 5.6 Settings & Internationalization (`SettingsView.tsx`, `i18n.ts`)
 - **Language Switcher**: Dynamic runtime language switching between 繁體中文, English, and 日本語.
-- **Push Notification Permission**: Interactive trigger for browser notification permissions.
+- **Notification Permission**: Interactive browser notification permission request. Background Web Push delivery is not implemented yet.
 - **iOS Settings Card Layout**: Grouped card sections matching iOS System Settings aesthetic.
 - **Sign Out**: One-tap session termination and state reset.
 
@@ -95,9 +95,8 @@
 flowchart TD
     A[Unauthenticated User] -->|Open App| B(Login / Signup View)
     B -->|Email Login / Google OAuth| C{Auth Success?}
-    C -->|No / Network Error| D[Local Demo Fallback]
+    C -->|Error| D[Show Auth Error & Retry]
     C -->|Yes| E[Main Application Context]
-    D --> E
     
     E --> F[Today View]
     E --> G[Tasks View]
@@ -157,7 +156,7 @@ Skyfocus Frontend (Vite + React + TypeScript + TailwindCSS)
 - **Styling**: Tailwind CSS + Custom CSS Variables in `src/index.css`.
 - **Icons & Dates**: `lucide-react`, `date-fns`.
 - **Backend & Auth**: `@supabase/supabase-js` connecting to PostgreSQL with Row Level Security.
-- **PWA Integration**: `vite-plugin-pwa` with Workbox runtime caching (`NetworkFirst` for Supabase API, `StaleWhileRevalidate` for static assets).
+- **PWA Integration**: `vite-plugin-pwa` with Workbox precaching for the application shell and static assets. Private Supabase API responses are not cached.
 
 ---
 
@@ -168,10 +167,10 @@ Defined in `supabase/migrations/20260722000000_initial_schema.sql`:
 ### 9.1 Schema Tables
 1. `profiles`: Extends Supabase `auth.users` (`id`, `display_name`, `avatar_url`, `language`, `timezone`).
 2. `task_lists`: Categories for tasks (`id`, `user_id`, `name`, `color`, `position`).
-3. `tasks`: Primary task entity (`id`, `user_id`, `list_id`, `title`, `description`, `priority`, `status`, `due_date`, `due_time`, `repeat_type`).
+3. `tasks`: Primary task entity (`id`, `user_id`, `list_id`, `title`, `description`, `priority`, `status`, `due_date`, `due_time`).
 4. `subtasks`: Sub-items for tasks (`id`, `task_id`, `title`, `is_completed`, `position`).
 5. `tags` & `task_tags`: Many-to-many tag labels for tasks.
-6. `reminders`: Scheduled reminder entries (`id`, `task_id`, `remind_at`, `is_sent`).
+6. `reminders`: Scheduled reminder entries (`id`, `task_id`, `reminder_time`, `repeat_type`, `enabled`).
 7. `notifications`: In-app notification queue.
 8. `push_subscriptions`: Web Push subscription endpoint tokens.
 9. `focus_sessions`: Pomodoro session logs (`id`, `user_id`, `task_id`, `duration`, `completed`, `mode`).
@@ -185,19 +184,19 @@ Defined in `supabase/migrations/20260722000000_initial_schema.sql`:
 
 ## 10. Release Checklist
 
-- [x] All 10 database tables and RLS DDL migration scripts executed cleanly.
-- [x] Multi-language translations (`zh-TW`, `en`, `ja`) fully localized for all views.
-- [x] PWA manifest (`manifest.webmanifest`), maskable icons (`192x192`, `512x512`), and Service Worker generated.
+- [x] Database schema and RLS migration are present in the repository.
+- [x] Multi-language translations (`zh-TW`, `en`, `ja`) are implemented.
+- [x] PWA manifest, maskable icons, and Service Worker are generated.
 - [x] Production build passes `npm run build` with zero TypeScript errors.
-- [x] Code repository pushed to GitHub (`Adi-0504/skyfocus`).
-- [x] Production deployment verified on Vercel (`https://skyfocus-ashy.vercel.app`).
-- [x] Google OAuth redirect URL verified on production environment.
+- [ ] Supabase production migration and RLS isolation require live-environment verification.
+- [ ] Google OAuth requires live-provider verification.
+- [ ] Background Web Push delivery is not implemented.
 
 ---
 
 ## 11. Future Roadmap
 
-1. **Web Push Background Notifications**: Integration with Service Worker Push API for scheduled reminder notifications.
+1. **Web Push Background Notifications**: VAPID subscription, Service Worker push handling, and a secure delivery service for scheduled reminders.
 2. **Cloud Sync Status Indicator**: Real-time indicator showing online/offline sync status in bottom navigation bar.
 3. **Advanced Analytics & Charts**: Weekly/monthly focus duration visual charts and productivity trends.
 4. **Drag-and-Drop Task Reordering**: Interactive reordering for subtasks and list items.

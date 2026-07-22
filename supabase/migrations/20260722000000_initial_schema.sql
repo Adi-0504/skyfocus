@@ -4,17 +4,8 @@
 -- Enable UUID extension if needed
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Clean existing legacy tables if any to prevent type conflicts
-DROP TABLE IF EXISTS public.focus_sessions CASCADE;
-DROP TABLE IF EXISTS public.push_subscriptions CASCADE;
-DROP TABLE IF EXISTS public.notifications CASCADE;
-DROP TABLE IF EXISTS public.reminders CASCADE;
-DROP TABLE IF EXISTS public.task_tags CASCADE;
-DROP TABLE IF EXISTS public.tags CASCADE;
-DROP TABLE IF EXISTS public.subtasks CASCADE;
-DROP TABLE IF EXISTS public.tasks CASCADE;
-DROP TABLE IF EXISTS public.task_lists CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
+-- This migration is intentionally non-destructive. Never drop production tables
+-- here; schema changes must be introduced in a new migration that preserves data.
 
 -- 1. Profiles Table
 CREATE TABLE public.profiles (
@@ -166,7 +157,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Trigger on auth.users insert
 CREATE OR REPLACE TRIGGER on_auth_user_created
@@ -192,32 +183,43 @@ CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Task Lists
-CREATE POLICY "Users can manage own task_lists" ON public.task_lists FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own task_lists" ON public.task_lists FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Tasks
-CREATE POLICY "Users can manage own tasks" ON public.tasks FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own tasks" ON public.tasks FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Subtasks (via Task ownership)
 CREATE POLICY "Users can manage subtasks of own tasks" ON public.subtasks FOR ALL USING (
   EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = subtasks.task_id AND tasks.user_id = auth.uid())
+) WITH CHECK (
+  EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = subtasks.task_id AND tasks.user_id = auth.uid())
 );
 
 -- Tags
-CREATE POLICY "Users can manage own tags" ON public.tags FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own tags" ON public.tags FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Task Tags (via Task ownership)
 CREATE POLICY "Users can manage task_tags of own tasks" ON public.task_tags FOR ALL USING (
   EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = task_tags.task_id AND tasks.user_id = auth.uid())
+) WITH CHECK (
+  EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = task_tags.task_id AND tasks.user_id = auth.uid())
+  AND EXISTS (SELECT 1 FROM public.tags WHERE tags.id = task_tags.tag_id AND tags.user_id = auth.uid())
 );
 
 -- Reminders
-CREATE POLICY "Users can manage own reminders" ON public.reminders FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own reminders" ON public.reminders FOR ALL USING (
+  auth.uid() = user_id
+  AND EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = reminders.task_id AND tasks.user_id = auth.uid())
+) WITH CHECK (
+  auth.uid() = user_id
+  AND EXISTS (SELECT 1 FROM public.tasks WHERE tasks.id = reminders.task_id AND tasks.user_id = auth.uid())
+);
 
 -- Notifications
-CREATE POLICY "Users can manage own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Push Subscriptions
-CREATE POLICY "Users can manage own push_subscriptions" ON public.push_subscriptions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own push_subscriptions" ON public.push_subscriptions FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Focus Sessions
-CREATE POLICY "Users can manage own focus_sessions" ON public.focus_sessions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own focus_sessions" ON public.focus_sessions FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);

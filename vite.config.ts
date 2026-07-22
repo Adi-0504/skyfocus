@@ -18,9 +18,9 @@ export default defineConfig({
         'pwa-512x512.png',
       ],
       manifest: {
-        name: 'Skyfocus - 專注任務管理',
+        name: 'Skyfocus — 提醒與專注',
         short_name: 'Skyfocus',
-        description: '極致專注、優雅高效的個人任務隨身助理',
+        description: '結合提醒事項與專注計時的優雅 Progressive Web App。',
         theme_color: '#427692',
         background_color: '#427692',
         display: 'standalone',
@@ -65,18 +65,6 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,webp}'],
         runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/wrzpjgjltlyrzdumcbrq\.supabase\.co\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 300, // 5 min
-              },
-              networkTimeoutSeconds: 10,
-            },
-          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
             handler: 'StaleWhileRevalidate',

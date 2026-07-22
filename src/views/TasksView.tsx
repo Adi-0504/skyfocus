@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, CheckCircle2, Circle, Clock, Tag as TagIcon, ListFilter, ArrowUpDown, Trash2, FolderPlus } from 'lucide-react';
+import { Search, Plus, CheckCircle2, Circle, Clock, Tag as TagIcon, ListFilter, ArrowUpDown, Trash2, FolderPlus, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTasks } from '../context/TaskContext';
 import { Task, Priority, TaskStatus } from '../types/database';
@@ -15,6 +15,8 @@ export const TasksView: React.FC<TasksViewProps> = ({ onOpenTaskModal }) => {
     lists,
     tags,
     loading,
+    error,
+    fetchTasks,
     activeListId,
     setActiveListId,
     searchQuery,
@@ -29,6 +31,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ onOpenTaskModal }) => {
     setSortBy,
     toggleTaskCompletion,
     createTaskList,
+    renameTaskList,
     deleteTaskList,
   } = useTasks();
 
@@ -129,6 +132,15 @@ export const TasksView: React.FC<TasksViewProps> = ({ onOpenTaskModal }) => {
       )}
 
       {/* Search Input Bar */}
+      {error && (
+        <div className="sky-card p-4 mb-4 flex items-center justify-between gap-3 text-sm">
+          <span className="text-[#475A61]">{t('common.error_title')}</span>
+          <button type="button" onClick={fetchTasks} className="sky-button-secondary px-3 py-1.5 text-xs">
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
+
       <div className="relative mb-4">
         <Search className="w-5 h-5 absolute left-3.5 top-3 text-[#68828C]" />
         <input
@@ -165,13 +177,27 @@ export const TasksView: React.FC<TasksViewProps> = ({ onOpenTaskModal }) => {
               {l.name}
             </button>
             {activeListId === l.id && (
-              <button
-                onClick={() => deleteTaskList(l.id)}
-                className="ml-1 p-1 text-rose-300 hover:text-rose-100"
-                title="Delete list"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center">
+                <button
+                  onClick={() => {
+                    const nextName = window.prompt(t('tasks.rename_list_prompt'), l.name);
+                    if (nextName) void renameTaskList(l.id, nextName);
+                  }}
+                  className="ml-1 p-1 text-white/70 hover:text-white"
+                  title={t('tasks.rename_list')}
+                  aria-label={t('tasks.rename_list')}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => deleteTaskList(l.id)}
+                  className="ml-1 p-1 text-rose-300 hover:text-rose-100"
+                  title={t('tasks.delete_list')}
+                  aria-label={t('tasks.delete_list')}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
         ))}
