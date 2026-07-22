@@ -1,0 +1,276 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #427692;
+  --surface-card: #F1EEDC;
+  --text-primary: #475A61;
+  --text-secondary: #68828C;
+  --accent-dark: #2C5364;
+  --sky-highlight: #E2DEC3;
+  --radius-sm: 12px;
+  --radius-card: 20px;
+  --radius-lg: 28px;
+  --nav-height: 88px;
+}
+
+/* === RESET & BASE === */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'SF Pro Display', 'SF Pro Text', 'PingFang TC', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  /* iOS Safe Areas */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Allow text selection inside inputs */
+input, textarea, select {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* === CUSTOM SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(71, 90, 97, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 90, 97, 0.4);
+}
+
+/* Hide scrollbar visually but allow scroll */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* === DESIGN TOKENS === */
+.sky-bg {
+  background-color: #427692;
+}
+
+.sky-card {
+  background-color: #F1EEDC;
+  color: #475A61;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.10), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+}
+
+.sky-card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sky-card-hover:active {
+  transform: scale(0.985);
+}
+
+.sky-sheet {
+  background-color: #F1EEDC;
+  color: #475A61;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+}
+
+.sky-button-primary {
+  background-color: #475A61;
+  color: #F1EEDC;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sky-button-primary:hover {
+  opacity: 0.92;
+}
+
+.sky-button-primary:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.sky-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sky-button-secondary {
+  background-color: rgba(71, 90, 97, 0.10);
+  color: #475A61;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sky-button-secondary:hover {
+  background-color: rgba(71, 90, 97, 0.15);
+}
+
+.sky-button-secondary:active {
+  transform: scale(0.97);
+}
+
+.sky-input {
+  background-color: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(71, 90, 97, 0.12);
+  border-radius: 12px;
+  color: #475A61;
+  outline: none;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+}
+
+.sky-input::placeholder {
+  color: rgba(71, 90, 97, 0.45);
+}
+
+.sky-input:focus {
+  border-color: rgba(71, 90, 97, 0.5);
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(71, 90, 97, 0.08);
+}
+
+select.sky-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475A61' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  cursor: pointer;
+}
+
+/* === NAVIGATION === */
+.floating-nav {
+  background-color: #F1EEDC;
+  border-radius: 28px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* === ANIMATIONS === */
+.fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === SKELETON LOADING === */
+.skeleton {
+  background: linear-gradient(90deg, rgba(71, 90, 97, 0.08) 25%, rgba(71, 90, 97, 0.14) 50%, rgba(71, 90, 97, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* === PRIORITY BADGES === */
+.badge-high {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+.badge-medium {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+.badge-low {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+/* === TASK COMPLETION ANIMATION === */
+@keyframes checkPop {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.check-pop {
+  animation: checkPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* === TOUCH FEEDBACK === */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* === MODAL OVERLAY === */
+.modal-overlay {
+  background: rgba(30, 40, 50, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
